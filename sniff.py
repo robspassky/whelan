@@ -40,11 +40,28 @@ def decode_tcp_packet(s):
     d={}
     d['source_port']=socket.ntohs(struct.unpack('H',s[0:2])[0])
     d['dest_port']=socket.ntohs(struct.unpack('H',s[2:4])[0])
+    d['sequence']=socket.ntohl(struct.unpack('I',s[4:8])[0])
+    d['ack']=socket.ntohl(struct.unpack('I',s[8:12])[0])
+    d['offset']=(ord(s[12]) & 0xf0) >> 4
+    d['cksum']=socket.ntohs(struct.unpack('H',s[16:18])[0])
+    d['urgent']=socket.ntohs(struct.unpack('H',s[18:20])[0])
+    d['NS'] = (ord(s[12]) & 0x01) != 0
+    d['CWR'] = (ord(s[13]) & 0x80) != 0
+    d['ECE'] = (ord(s[13]) & 0x40) != 0
+    d['URG'] = (ord(s[13]) & 0x20) != 0
+    d['ACK'] = (ord(s[13]) & 0x10) != 0
+    d['PSH'] = (ord(s[13]) & 0x08) != 0
+    d['RST'] = (ord(s[13]) & 0x04) != 0
+    d['SYN'] = (ord(s[13]) & 0x02) != 0
+    d['FIN'] = (ord(s[13]) & 0x01) != 0
+
+    d['data']=s[4*d['offset']:]
     return d
 
 def dumphex(s):
     #bytes = map(lambda x: '%.2x' % x, map(ord, s))
     bytes = map(lambda x: '%c' % x, map(ord, s))
+    i = 0
     for i in xrange(0,len(bytes)/16):
         print '        %s' % string.join(bytes[i*16:(i+1)*16],' ')
     print '        %s' % string.join(bytes[(i+1)*16:],' ')
@@ -70,8 +87,32 @@ def print_packet(pktlen, data, timestamp):
         print '    TCP HEADER'
         print '    source port: %s' % tcp['source_port']
         print '    destination port: %s' % tcp['dest_port']
-        print '    data:'
-        dumphex(decoded['data'])
+        print '    sequence: %s' % tcp['sequence']
+        print '    ack: %s' % tcp['ack']
+        print '    offset: %s' % tcp['offset']
+        print '    cksum: %s' % tcp['cksum']
+        print '    urgent: %s' % tcp['urgent']
+        if tcp['NS']:
+            print '    NS'
+        if tcp['CWR']:
+            print '    CWR'
+        if tcp['ECE']:
+            print '    ECE'
+        if tcp['URG']:
+            print '    URG'
+        if tcp['ACK']:
+            print '    ACK'
+        if tcp['PSH']:
+            print '    PSH'
+        if tcp['RST']:
+            print '    RST'
+        if tcp['SYN']:
+            print '    SYN'
+        if tcp['FIN']:
+            print '    FIN'
+        print '    DATA:'
+        #dumphex(decoded['data'])
+        dumphex(tcp['data'])
 
 
 if __name__=='__main__':

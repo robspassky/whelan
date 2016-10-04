@@ -114,6 +114,17 @@ def print_packet(pktlen, data, timestamp):
         #dumphex(decoded['data'])
         dumphex(tcp['data'])
 
+def print_http_packet(pktlen, data, timestamp):
+    if not data:
+        return
+
+    if data[12:14]=='\x08\x00':
+        decoded=decode_ip_packet(data[14:])
+        tcp=decode_tcp_packet(decoded['data'])
+        if tcp['PSH'] and tcp['data'][0:4] == 'GET ':
+            # then this is an http request
+            print tcp['data']
+
 
 if __name__=='__main__':
 
@@ -135,7 +146,7 @@ if __name__=='__main__':
     #p.setnonblock(1)
     try:
         while 1:
-            p.dispatch(1, print_packet)
+            p.dispatch(1, print_http_packet)
 
         # specify 'None' to dump to dumpfile, assuming you have called
         # the dump_open method

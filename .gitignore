@@ -91,3 +91,4 @@ ENV/
 *.swp
 *.swo
 foo
+**/*.pkt
